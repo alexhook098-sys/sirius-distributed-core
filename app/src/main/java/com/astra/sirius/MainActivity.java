@@ -36,10 +36,17 @@ public class MainActivity extends Activity {
                 8766
         );
 
-        // Samsung как второй узел
+        // Samsung
         siriusRouter.addNode(
                 "Samsung",
                 "192.168.100.5",
+                8766
+        );
+
+        // Huawei
+        siriusRouter.addNode(
+                "Huawei",
+                "192.168.100.3",
                 8766
         );
 
