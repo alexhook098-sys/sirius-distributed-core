@@ -179,12 +179,17 @@ public class MainActivity extends Activity {
                 String result =
                         dispatcher.dispatch(task);
 
+                String executedBy =
+                        dispatcher.getLastNodeName();
+
                 runOnUiThread(() -> {
 
                     if (result.equals("RESULT:42")) {
 
                         status.setText(
-                                "●  TASK RESULT: 42"
+                                "●  TASK RESULT: 42\n"
+                                        + "EXECUTED BY: "
+                                        + executedBy
                         );
 
                         status.setTextColor(
@@ -199,6 +204,9 @@ public class MainActivity extends Activity {
 
                         status.setText(
                                 "●  " + result
+                                        + "\n"
+                                        + "NODE: "
+                                        + executedBy
                         );
 
                         status.setTextColor(
@@ -254,4 +262,4 @@ public class MainActivity extends Activity {
             siriusNode.stop();
         }
     }
-            }
+}
