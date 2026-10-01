@@ -65,9 +65,11 @@ public class MainActivity extends Activity {
 
         // Фон
         ImageView background = new ImageView(this);
+
         background.setImageResource(
                 R.drawable.sirius_background
         );
+
         background.setScaleType(
                 ImageView.ScaleType.CENTER_CROP
         );
@@ -82,6 +84,7 @@ public class MainActivity extends Activity {
 
         // Затемнение
         View darkOverlay = new View(this);
+
         darkOverlay.setBackgroundColor(
                 Color.argb(80, 0, 0, 0)
         );
@@ -96,52 +99,125 @@ public class MainActivity extends Activity {
 
         // Центральный блок
         LinearLayout content = new LinearLayout(this);
+
         content.setOrientation(
                 LinearLayout.VERTICAL
         );
-        content.setGravity(Gravity.CENTER);
-        content.setPadding(40, 40, 40, 40);
+
+        content.setGravity(
+                Gravity.CENTER
+        );
+
+        content.setPadding(
+                40,
+                40,
+                40,
+                40
+        );
 
         // Заголовок
         TextView title = new TextView(this);
+
         title.setText("✦ SIRIUS ✦");
-        title.setTextColor(Color.WHITE);
+
+        title.setTextColor(
+                Color.WHITE
+        );
+
         title.setTextSize(38);
+
         title.setTypeface(
                 Typeface.DEFAULT,
                 Typeface.BOLD
         );
-        title.setGravity(Gravity.CENTER);
+
+        title.setGravity(
+                Gravity.CENTER
+        );
 
         // Подзаголовок
         TextView subtitle = new TextView(this);
-        subtitle.setText("DISTRIBUTED CORE");
-        subtitle.setTextColor(Color.LTGRAY);
-        subtitle.setTextSize(17);
-        subtitle.setGravity(Gravity.CENTER);
-        subtitle.setPadding(0, 15, 0, 20);
 
-        // Статус
-        status = new TextView(this);
-        status.setText("●  SIRIUS ONLINE");
-        status.setTextColor(
-                Color.rgb(100, 255, 120)
+        subtitle.setText(
+                "DISTRIBUTED CORE"
         );
-        status.setTextSize(19);
-        status.setGravity(Gravity.CENTER);
-        status.setPadding(0, 0, 0, 15);
 
-        // Статус узлов
+        subtitle.setTextColor(
+                Color.LTGRAY
+        );
+
+        subtitle.setTextSize(17);
+
+        subtitle.setGravity(
+                Gravity.CENTER
+        );
+
+        subtitle.setPadding(
+                0,
+                15,
+                0,
+                20
+        );
+
+        // Главный статус
+        status = new TextView(this);
+
+        status.setText(
+                "●  SIRIUS ONLINE"
+        );
+
+        status.setTextColor(
+                Color.rgb(
+                        100,
+                        255,
+                        120
+                )
+        );
+
+        status.setTextSize(19);
+
+        status.setGravity(
+                Gravity.CENTER
+        );
+
+        status.setPadding(
+                0,
+                0,
+                0,
+                15
+        );
+
+        // Информация об узлах
         nodesStatus = new TextView(this);
-        nodesStatus.setText("Checking nodes...");
-        nodesStatus.setTextColor(Color.WHITE);
-        nodesStatus.setTextSize(16);
-        nodesStatus.setGravity(Gravity.CENTER);
-        nodesStatus.setPadding(0, 0, 0, 20);
+
+        nodesStatus.setText(
+                "Checking nodes..."
+        );
+
+        nodesStatus.setTextColor(
+                Color.WHITE
+        );
+
+        nodesStatus.setTextSize(14);
+
+        nodesStatus.setGravity(
+                Gravity.CENTER
+        );
+
+        nodesStatus.setPadding(
+                0,
+                0,
+                0,
+                20
+        );
 
         // CHECK NODES
         Button checkButton = new Button(this);
-        checkButton.setText("CHECK NODES");
+
+        checkButton.setText(
+                "CHECK NODES"
+        );
+
         checkButton.setTextSize(16);
 
         checkButton.setOnClickListener(v -> {
@@ -155,8 +231,15 @@ public class MainActivity extends Activity {
                 String result =
                         siriusRouter.getNodesStatus();
 
+                String detailedResult =
+                        buildDetailedNodeStatus(
+                                result
+                        );
+
                 runOnUiThread(() ->
-                        nodesStatus.setText(result)
+                        nodesStatus.setText(
+                                detailedResult
+                        )
                 );
 
             }).start();
@@ -164,7 +247,11 @@ public class MainActivity extends Activity {
 
         // TEST DISTRIBUTION
         Button testButton = new Button(this);
-        testButton.setText("TEST DISTRIBUTION");
+
+        testButton.setText(
+                "TEST DISTRIBUTION"
+        );
+
         testButton.setTextSize(16);
 
         testButton.setOnClickListener(v -> {
@@ -173,7 +260,9 @@ public class MainActivity extends Activity {
                     "●  DISTRIBUTING TASK..."
             );
 
-            status.setTextColor(Color.YELLOW);
+            status.setTextColor(
+                    Color.YELLOW
+            );
 
             new Thread(() -> {
 
@@ -184,14 +273,18 @@ public class MainActivity extends Activity {
                         );
 
                 String result =
-                        dispatcher.dispatch(task);
+                        dispatcher.dispatch(
+                                task
+                        );
 
                 String executedBy =
                         dispatcher.getLastNodeName();
 
                 runOnUiThread(() -> {
 
-                    if (result.equals("RESULT:42")) {
+                    if (result.equals(
+                            "RESULT:42"
+                    )) {
 
                         status.setText(
                                 "●  TASK RESULT: 42\n"
@@ -238,7 +331,8 @@ public class MainActivity extends Activity {
                         FrameLayout.LayoutParams.WRAP_CONTENT
                 );
 
-        contentParams.gravity = Gravity.CENTER;
+        contentParams.gravity =
+                Gravity.CENTER;
 
         root.addView(
                 content,
@@ -253,11 +347,147 @@ public class MainActivity extends Activity {
             String result =
                     siriusRouter.getNodesStatus();
 
+            String detailedResult =
+                    buildDetailedNodeStatus(
+                            result
+                    );
+
             runOnUiThread(() ->
-                    nodesStatus.setText(result)
+                    nodesStatus.setText(
+                            detailedResult
+                    )
             );
 
         }).start();
+    }
+
+    // Формируем расширенную информацию
+    private String buildDetailedNodeStatus(
+            String basicStatus
+    ) {
+
+        StringBuilder result =
+                new StringBuilder();
+
+        for (SiriusNodeInfo node :
+                siriusRouter.getNodes()) {
+
+            result.append(
+                    node.getName()
+            );
+
+            if (node.isOnline()) {
+
+                result.append(
+                        "  ● ONLINE"
+                );
+
+                result.append(
+                        " • "
+                );
+
+                result.append(
+                        node.getLatencyMs()
+                );
+
+                result.append(
+                        " ms"
+                );
+
+                result.append(
+                        " • "
+                );
+
+                result.append(
+                        node.getHealthStatus()
+                );
+
+                result.append("\n");
+
+                // RAM
+                if (node.getTotalRamMb() >= 0) {
+
+                    result.append(
+                            "RAM: "
+                    );
+
+                    result.append(
+                            node.getTotalRamMb()
+                    );
+
+                    result.append(
+                            " MB"
+                    );
+
+                    if (node.getAvailableRamMb() >= 0) {
+
+                        result.append(
+                                "  |  FREE: "
+                        );
+
+                        result.append(
+                                node.getAvailableRamMb()
+                        );
+
+                        result.append(
+                                " MB"
+                        );
+                    }
+
+                    result.append("\n");
+                }
+
+                // CPU
+                if (node.getCpuCores() >= 0) {
+
+                    result.append(
+                            "CPU: "
+                    );
+
+                    result.append(
+                            node.getCpuCores()
+                    );
+
+                    result.append(
+                            " cores"
+                    );
+
+                    result.append("\n");
+                }
+
+                // Архитектура
+                if (node.getCpuArchitecture()
+                        != null
+                        &&
+                        !node.getCpuArchitecture()
+                                .equals(
+                                        "UNKNOWN"
+                                )) {
+
+                    result.append(
+                            "ARCH: "
+                    );
+
+                    result.append(
+                            node.getCpuArchitecture()
+                    );
+
+                    result.append("\n");
+                }
+
+            } else {
+
+                result.append(
+                        "  ● OFFLINE"
+                );
+
+                result.append("\n");
+            }
+
+            result.append("\n");
+        }
+
+        return result.toString().trim();
     }
 
     @Override
@@ -266,7 +496,8 @@ public class MainActivity extends Activity {
         super.onDestroy();
 
         if (siriusNode != null) {
+
             siriusNode.stop();
         }
     }
-}
+    }
