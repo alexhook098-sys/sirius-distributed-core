@@ -1,5 +1,7 @@
 package com.astra.sirius;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,20 +43,24 @@ public class SiriusRouter {
 
     public String getNodeHost() {
 
-        if (nodes.isEmpty()) {
+        SiriusNodeInfo node = selectAvailableNode();
+
+        if (node == null) {
             return null;
         }
 
-        return nodes.get(0).getHost();
+        return node.getHost();
     }
 
     public int getNodePort() {
 
-        if (nodes.isEmpty()) {
+        SiriusNodeInfo node = selectAvailableNode();
+
+        if (node == null) {
             return -1;
         }
 
-        return nodes.get(0).getPort();
+        return node.getPort();
     }
 
     public SiriusTask createAddTask(int a, int b) {
@@ -67,13 +73,53 @@ public class SiriusRouter {
 
     public String selectNode() {
 
-        if (nodes.isEmpty()) {
+        SiriusNodeInfo node = selectAvailableNode();
+
+        if (node == null) {
             return "NO_NODES";
         }
 
-        SiriusNodeInfo node = nodes.get(0);
-
         return node.getHost() + ":" + node.getPort();
+    }
+
+    private SiriusNodeInfo selectAvailableNode() {
+
+        for (SiriusNodeInfo node : nodes) {
+
+            if (checkNode(node)) {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean checkNode(SiriusNodeInfo node) {
+
+        try {
+
+            Socket socket = new Socket();
+
+            socket.connect(
+                    new InetSocketAddress(
+                            node.getHost(),
+                            node.getPort()
+                    ),
+                    1000
+            );
+
+            socket.close();
+
+            node.setOnline(true);
+
+            return true;
+
+        } catch (Exception e) {
+
+            node.setOnline(false);
+
+            return false;
+        }
     }
 
     @Override
@@ -83,4 +129,4 @@ public class SiriusRouter {
                 "nodes=" + nodes +
                 '}';
     }
-            }
+}
