@@ -5,8 +5,6 @@ public class SiriusTaskDispatcher {
     private final SiriusRouter router;
     private final SiriusClient client;
 
-    private int nextNodeIndex = 0;
-
     private String lastNodeName = "UNKNOWN";
 
     public SiriusTaskDispatcher(
@@ -17,79 +15,67 @@ public class SiriusTaskDispatcher {
         this.client = client;
     }
 
-    public synchronized String dispatch(SiriusTask task) {
+    public synchronized String dispatch(
+            SiriusTask task
+    ) {
 
         if (router.getNodes().isEmpty()) {
+
             lastNodeName = "NONE";
+
             return "ERROR:NO_NODES";
         }
 
-        int nodeCount = router.getNodes().size();
+        // Обновляем состояние всех узлов
+        router.checkNodes();
 
-        for (int attempt = 0; attempt < nodeCount; attempt++) {
+        SiriusNodeInfo bestNode = null;
 
-            int index =
-                    (nextNodeIndex + attempt) % nodeCount;
+        // Ищем онлайн-узел
+        // с минимальной задержкой
+        for (SiriusNodeInfo node :
+                router.getNodes()) {
 
-            SiriusNodeInfo node =
-                    router.getNodes().get(index);
-
-            if (!isNodeOnline(node)) {
+            if (!node.isOnline()) {
                 continue;
             }
 
-            lastNodeName = node.getName();
+            if (node.getLatencyMs() < 0) {
+                continue;
+            }
 
-            String result =
-                    client.sendTask(
-                            node.getHost(),
-                            node.getPort(),
-                            task
-                    );
+            if (bestNode == null ||
+                    node.getLatencyMs()
+                            < bestNode.getLatencyMs()) {
 
-            nextNodeIndex =
-                    (index + 1) % nodeCount;
-
-            return result;
+                bestNode = node;
+            }
         }
 
-        lastNodeName = "NONE";
+        if (bestNode == null) {
 
-        return "ERROR:NO_ONLINE_NODES";
+            lastNodeName = "NONE";
+
+            return "ERROR:NO_ONLINE_NODES";
+        }
+
+        // Запоминаем выбранный узел
+        lastNodeName =
+                bestNode.getName();
+
+        // Отправляем задачу
+        String result =
+                client.sendTask(
+                        bestNode.getHost(),
+                        bestNode.getPort(),
+                        task
+                );
+
+        return result;
     }
 
     public synchronized String getLastNodeName() {
+
         return lastNodeName;
     }
-
-    private boolean isNodeOnline(
-            SiriusNodeInfo node
-    ) {
-
-        try {
-
-            java.net.Socket socket =
-                    new java.net.Socket();
-
-            socket.connect(
-                    new java.net.InetSocketAddress(
-                            node.getHost(),
-                            node.getPort()
-                    ),
-                    1000
-            );
-
-            socket.close();
-
-            node.setOnline(true);
-
-            return true;
-
-        } catch (Exception e) {
-
-            node.setOnline(false);
-
-            return false;
-        }
-    }
-    }
+}
