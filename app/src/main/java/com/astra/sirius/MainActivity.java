@@ -17,6 +17,7 @@ public class MainActivity extends Activity {
     private SiriusNode siriusNode;
     private SiriusRouter siriusRouter;
     private SiriusClient siriusClient;
+    private SiriusTaskDispatcher dispatcher;
 
     private TextView status;
     private TextView nodesStatus;
@@ -42,7 +43,14 @@ public class MainActivity extends Activity {
                 8766
         );
 
+        // Client
         siriusClient = new SiriusClient();
+
+        // Dispatcher
+        dispatcher = new SiriusTaskDispatcher(
+                siriusRouter,
+                siriusClient
+        );
 
         // Главный контейнер
         FrameLayout root = new FrameLayout(this);
@@ -50,8 +58,12 @@ public class MainActivity extends Activity {
 
         // Фон
         ImageView background = new ImageView(this);
-        background.setImageResource(R.drawable.sirius_background);
-        background.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        background.setImageResource(
+                R.drawable.sirius_background
+        );
+        background.setScaleType(
+                ImageView.ScaleType.CENTER_CROP
+        );
 
         root.addView(
                 background,
@@ -77,7 +89,9 @@ public class MainActivity extends Activity {
 
         // Центральный блок
         LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
+        content.setOrientation(
+                LinearLayout.VERTICAL
+        );
         content.setGravity(Gravity.CENTER);
         content.setPadding(40, 40, 40, 40);
 
@@ -100,7 +114,7 @@ public class MainActivity extends Activity {
         subtitle.setGravity(Gravity.CENTER);
         subtitle.setPadding(0, 15, 0, 20);
 
-        // Главный статус
+        // Статус
         status = new TextView(this);
         status.setText("●  SIRIUS ONLINE");
         status.setTextColor(
@@ -118,7 +132,7 @@ public class MainActivity extends Activity {
         nodesStatus.setGravity(Gravity.CENTER);
         nodesStatus.setPadding(0, 0, 0, 20);
 
-        // Кнопка проверки узлов
+        // CHECK NODES
         Button checkButton = new Button(this);
         checkButton.setText("CHECK NODES");
         checkButton.setTextSize(16);
@@ -141,37 +155,20 @@ public class MainActivity extends Activity {
             }).start();
         });
 
-        // Кнопка тестовой задачи
+        // TEST DISTRIBUTION
         Button testButton = new Button(this);
-        testButton.setText("TEST NODE");
+        testButton.setText("TEST DISTRIBUTION");
         testButton.setTextSize(16);
 
         testButton.setOnClickListener(v -> {
 
             status.setText(
-                    "●  SENDING TASK..."
+                    "●  DISTRIBUTING TASK..."
             );
 
             status.setTextColor(Color.YELLOW);
 
             new Thread(() -> {
-
-                SiriusNodeInfo node =
-                        siriusRouter.getAvailableNode();
-
-                if (node == null) {
-
-                    runOnUiThread(() -> {
-
-                        status.setText(
-                                "●  NO NODES AVAILABLE"
-                        );
-
-                        status.setTextColor(Color.RED);
-                    });
-
-                    return;
-                }
 
                 SiriusTask task =
                         siriusRouter.createAddTask(
@@ -180,18 +177,14 @@ public class MainActivity extends Activity {
                         );
 
                 String result =
-                        siriusClient.sendTask(
-                                node.getHost(),
-                                node.getPort(),
-                                task
-                        );
+                        dispatcher.dispatch(task);
 
                 runOnUiThread(() -> {
 
                     if (result.equals("RESULT:42")) {
 
                         status.setText(
-                                "●  NODE RESULT: 42"
+                                "●  TASK RESULT: 42"
                         );
 
                         status.setTextColor(
@@ -261,4 +254,4 @@ public class MainActivity extends Activity {
             siriusNode.stop();
         }
     }
-    }
+            }
