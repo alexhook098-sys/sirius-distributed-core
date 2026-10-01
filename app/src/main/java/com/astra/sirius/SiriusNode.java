@@ -76,14 +76,9 @@ public class SiriusNode {
                         "[SIRIUS] TASK: " + message
                 );
 
-                if (message.equals("PING")) {
+                String result = processTask(message);
 
-                    writer.println("PONG");
-
-                } else {
-
-                    writer.println("SIRIUS_OK");
-                }
+                writer.println(result);
             }
 
             client.close();
@@ -95,6 +90,46 @@ public class SiriusNode {
                             + e.getMessage()
             );
         }
+    }
+
+    private String processTask(String task) {
+
+        if (task.equals("PING")) {
+            return "PONG";
+        }
+
+        if (task.startsWith("TASK:ADD:")) {
+
+            try {
+
+                String data = task.substring(9);
+
+                String[] numbers = data.split(":");
+
+                if (numbers.length != 2) {
+                    return "ERROR:INVALID_TASK";
+                }
+
+                int a = Integer.parseInt(numbers[0]);
+                int b = Integer.parseInt(numbers[1]);
+
+                int result = a + b;
+
+                System.out.println(
+                        "[SIRIUS] CALC: "
+                                + a + " + " + b
+                                + " = " + result
+                );
+
+                return "RESULT:" + result;
+
+            } catch (Exception e) {
+
+                return "ERROR:INVALID_NUMBERS";
+            }
+        }
+
+        return "ERROR:UNKNOWN_TASK";
     }
 
     public void stop() {
@@ -110,4 +145,4 @@ public class SiriusNode {
 
         serverThread = null;
     }
-                      }
+                    }
