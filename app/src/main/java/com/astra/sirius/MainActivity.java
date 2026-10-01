@@ -15,6 +15,9 @@ public class MainActivity extends Activity {
 
     private SiriusNode siriusNode;
 
+    private SiriusRouter siriusRouter;
+    private SiriusClient siriusClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,6 +25,15 @@ public class MainActivity extends Activity {
         // Запускаем сетевой узел SIRIUS
         siriusNode = new SiriusNode();
         siriusNode.start();
+
+        // Подключаем Router
+        siriusRouter = new SiriusRouter(
+                "192.168.100.27",
+                8766
+        );
+
+        // Подключаем Client
+        siriusClient = new SiriusClient();
 
         // Главный контейнер
         FrameLayout root = new FrameLayout(this);
@@ -106,4 +118,4 @@ public class MainActivity extends Activity {
             siriusNode.stop();
         }
     }
-}
+            }
