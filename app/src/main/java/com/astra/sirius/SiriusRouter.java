@@ -49,12 +49,17 @@ public class SiriusRouter {
         }
     }
 
-    // Проверка одного узла
-    private boolean checkNode(SiriusNodeInfo node) {
+    // Проверка одного узла + измерение задержки
+    private boolean checkNode(
+            SiriusNodeInfo node
+    ) {
+
+        Socket socket = new Socket();
 
         try {
 
-            Socket socket = new Socket();
+            long startTime =
+                    System.nanoTime();
 
             socket.connect(
                     new InetSocketAddress(
@@ -64,15 +69,29 @@ public class SiriusRouter {
                     1000
             );
 
-            socket.close();
+            long endTime =
+                    System.nanoTime();
 
+            long latency =
+                    (endTime - startTime)
+                            / 1_000_000;
+
+            node.setLatencyMs(latency);
             node.setOnline(true);
+
+            socket.close();
 
             return true;
 
         } catch (Exception e) {
 
             node.setOnline(false);
+            node.setLatencyMs(-1);
+
+            try {
+                socket.close();
+            } catch (Exception ignored) {
+            }
 
             return false;
         }
@@ -94,7 +113,8 @@ public class SiriusRouter {
     // Получить адрес доступного узла
     public String selectNode() {
 
-        SiriusNodeInfo node = selectAvailableNode();
+        SiriusNodeInfo node =
+                selectAvailableNode();
 
         if (node == null) {
             return "NO_NODES";
@@ -112,7 +132,8 @@ public class SiriusRouter {
     // Адрес узла для отправки задачи
     public String getNodeHost() {
 
-        SiriusNodeInfo node = selectAvailableNode();
+        SiriusNodeInfo node =
+                selectAvailableNode();
 
         if (node == null) {
             return null;
@@ -123,7 +144,8 @@ public class SiriusRouter {
 
     public int getNodePort() {
 
-        SiriusNodeInfo node = selectAvailableNode();
+        SiriusNodeInfo node =
+                selectAvailableNode();
 
         if (node == null) {
             return -1;
@@ -133,7 +155,10 @@ public class SiriusRouter {
     }
 
     // Создание тестовой задачи
-    public SiriusTask createAddTask(int a, int b) {
+    public SiriusTask createAddTask(
+            int a,
+            int b
+    ) {
 
         return new SiriusTask(
                 "ADD",
@@ -146,16 +171,38 @@ public class SiriusRouter {
 
         checkNodes();
 
-        StringBuilder result = new StringBuilder();
+        StringBuilder result =
+                new StringBuilder();
 
         for (SiriusNodeInfo node : nodes) {
 
-            result.append(node.getName());
+            result.append(
+                    node.getName()
+            );
 
             if (node.isOnline()) {
-                result.append("  ● ONLINE");
+
+                result.append(
+                        "  ● ONLINE"
+                );
+
+                result.append(
+                        "  • "
+                );
+
+                result.append(
+                        node.getLatencyMs()
+                );
+
+                result.append(
+                        " ms"
+                );
+
             } else {
-                result.append("  ● OFFLINE");
+
+                result.append(
+                        "  ● OFFLINE"
+                );
             }
 
             result.append("\n");
@@ -171,4 +218,4 @@ public class SiriusRouter {
                 "nodes=" + nodes +
                 '}';
     }
-            }
+                }
