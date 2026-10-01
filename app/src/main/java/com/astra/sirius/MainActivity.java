@@ -13,9 +13,15 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
+    private SiriusNode siriusNode;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Запускаем сетевой узел SIRIUS
+        siriusNode = new SiriusNode();
+        siriusNode.start();
 
         // Главный контейнер
         FrameLayout root = new FrameLayout(this);
@@ -91,4 +97,13 @@ public class MainActivity extends Activity {
 
         setContentView(root);
     }
-            }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (siriusNode != null) {
+            siriusNode.stop();
+        }
+    }
+}
