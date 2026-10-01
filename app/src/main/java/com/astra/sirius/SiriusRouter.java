@@ -9,7 +9,10 @@ public class SiriusRouter {
 
     private final List<SiriusNodeInfo> nodes;
 
-    public SiriusRouter(String nodeHost, int nodePort) {
+    public SiriusRouter(
+            String nodeHost,
+            int nodePort
+    ) {
 
         nodes = new ArrayList<>();
 
@@ -41,7 +44,7 @@ public class SiriusRouter {
         return nodes;
     }
 
-    // Проверяем все зарегистрированные узлы
+    // Проверяем все узлы
     public void checkNodes() {
 
         for (SiriusNodeInfo node : nodes) {
@@ -49,7 +52,7 @@ public class SiriusRouter {
         }
     }
 
-    // Проверка одного узла + измерение задержки
+    // Проверка узла + измерение задержки
     private boolean checkNode(
             SiriusNodeInfo node
     ) {
@@ -97,7 +100,7 @@ public class SiriusRouter {
         }
     }
 
-    // Возвращает первый доступный узел
+    // Первый доступный узел
     public SiriusNodeInfo selectAvailableNode() {
 
         for (SiriusNodeInfo node : nodes) {
@@ -110,7 +113,6 @@ public class SiriusRouter {
         return null;
     }
 
-    // Получить адрес доступного узла
     public String selectNode() {
 
         SiriusNodeInfo node =
@@ -123,13 +125,11 @@ public class SiriusRouter {
         return node.getAddress();
     }
 
-    // Получить выбранный узел
     public SiriusNodeInfo getAvailableNode() {
 
         return selectAvailableNode();
     }
 
-    // Адрес узла для отправки задачи
     public String getNodeHost() {
 
         SiriusNodeInfo node =
@@ -166,7 +166,7 @@ public class SiriusRouter {
         );
     }
 
-    // Текстовый список состояния узлов
+    // Статус всех узлов
     public String getNodesStatus() {
 
         checkNodes();
@@ -196,6 +196,14 @@ public class SiriusRouter {
 
                 result.append(
                         " ms"
+                );
+
+                result.append(
+                        "  • "
+                );
+
+                result.append(
+                        node.getHealthStatus()
                 );
 
             } else {
