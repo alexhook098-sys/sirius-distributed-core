@@ -1,5 +1,8 @@
 package com.astra.sirius;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -48,7 +51,12 @@ public class SiriusRouter {
     public void checkNodes() {
 
         for (SiriusNodeInfo node : nodes) {
+
             checkNode(node);
+
+            if (node.isOnline()) {
+                requestNodeInfo(node);
+            }
         }
     }
 
@@ -97,6 +105,150 @@ public class SiriusRouter {
             }
 
             return false;
+        }
+    }
+
+    // Запрашиваем характеристики устройства
+    private void requestNodeInfo(
+            SiriusNodeInfo node
+    ) {
+
+        try {
+
+            Socket socket =
+                    new Socket();
+
+            socket.connect(
+                    new InetSocketAddress(
+                            node.getHost(),
+                            node.getPort()
+                    ),
+                    1000
+            );
+
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            PrintWriter writer =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
+
+            writer.println("INFO");
+
+            String response =
+                    reader.readLine();
+
+            socket.close();
+
+            if (response == null) {
+                return;
+            }
+
+            parseNodeInfo(
+                    node,
+                    response
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "[SIRIUS] INFO ERROR "
+                            + node.getName()
+                            + ": "
+                            + e.getMessage()
+            );
+        }
+    }
+
+    // Разбираем INFO-ответ
+    private void parseNodeInfo(
+            SiriusNodeInfo node,
+            String response
+    ) {
+
+        try {
+
+            if (!response.startsWith("INFO:")) {
+                return;
+            }
+
+            String[] parts =
+                    response.split(":");
+
+            for (String part : parts) {
+
+                if (part.startsWith(
+                        "RAM_TOTAL="
+                )) {
+
+                    long value =
+                            Long.parseLong(
+                                    part.substring(
+                                            "RAM_TOTAL="
+                                                    .length()
+                                    )
+                            );
+
+                    node.setTotalRamMb(value);
+                }
+
+                else if (part.startsWith(
+                        "RAM_AVAILABLE="
+                )) {
+
+                    long value =
+                            Long.parseLong(
+                                    part.substring(
+                                            "RAM_AVAILABLE="
+                                                    .length()
+                                    )
+                            );
+
+                    node.setAvailableRamMb(value);
+                }
+
+                else if (part.startsWith(
+                        "CPU_CORES="
+                )) {
+
+                    int value =
+                            Integer.parseInt(
+                                    part.substring(
+                                            "CPU_CORES="
+                                                    .length()
+                                    )
+                            );
+
+                    node.setCpuCores(value);
+                }
+
+                else if (part.startsWith(
+                        "ARCH="
+                )) {
+
+                    String value =
+                            part.substring(
+                                    "ARCH=".length()
+                            );
+
+                    node.setCpuArchitecture(
+                            value
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "[SIRIUS] INFO PARSE ERROR: "
+                            + e.getMessage()
+            );
         }
     }
 
