@@ -7,6 +7,7 @@ public class SiriusNodeInfo {
     private final int port;
 
     private boolean online;
+    private long latencyMs;
 
     public SiriusNodeInfo(
             String name,
@@ -17,6 +18,7 @@ public class SiriusNodeInfo {
         this.host = host;
         this.port = port;
         this.online = false;
+        this.latencyMs = -1;
     }
 
     public String getName() {
@@ -39,6 +41,14 @@ public class SiriusNodeInfo {
         this.online = online;
     }
 
+    public long getLatencyMs() {
+        return latencyMs;
+    }
+
+    public void setLatencyMs(long latencyMs) {
+        this.latencyMs = latencyMs;
+    }
+
     public String getAddress() {
         return host + ":" + port;
     }
@@ -49,6 +59,7 @@ public class SiriusNodeInfo {
                 "name='" + name + '\'' +
                 ", address='" + getAddress() + '\'' +
                 ", online=" + online +
+                ", latencyMs=" + latencyMs +
                 '}';
     }
 }
