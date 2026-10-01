@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -14,32 +15,33 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
 
     private SiriusNode siriusNode;
-
     private SiriusRouter siriusRouter;
     private SiriusClient siriusClient;
+
+    private TextView status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Запускаем сетевой узел SIRIUS
+        // Запускаем локальный узел SIRIUS
         siriusNode = new SiriusNode();
         siriusNode.start();
 
-        // Подключаем Router
+        // Router знает адрес Vivo
         siriusRouter = new SiriusRouter(
                 "192.168.100.27",
                 8766
         );
 
-        // Подключаем Client
+        // Client отправляет задачи
         siriusClient = new SiriusClient();
 
         // Главный контейнер
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
 
-        // Фоновая картинка SIRIUS
+        // Фон
         ImageView background = new ImageView(this);
         background.setImageResource(R.drawable.sirius_background);
         background.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -52,7 +54,7 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // Затемнение поверх картинки
+        // Затемнение
         View darkOverlay = new View(this);
         darkOverlay.setBackgroundColor(Color.argb(80, 0, 0, 0));
 
@@ -64,13 +66,13 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // Центральный блок
+        // Контент
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER);
         content.setPadding(40, 40, 40, 40);
 
-        // Название
+        // Заголовок
         TextView title = new TextView(this);
         title.setText("✦ SIRIUS ✦");
         title.setTextColor(Color.WHITE);
@@ -84,18 +86,67 @@ public class MainActivity extends Activity {
         subtitle.setTextColor(Color.LTGRAY);
         subtitle.setTextSize(17);
         subtitle.setGravity(Gravity.CENTER);
-        subtitle.setPadding(0, 15, 0, 35);
+        subtitle.setPadding(0, 15, 0, 25);
 
         // Статус
-        TextView status = new TextView(this);
+        status = new TextView(this);
         status.setText("●  SIRIUS ONLINE");
         status.setTextColor(Color.rgb(100, 255, 120));
         status.setTextSize(19);
         status.setGravity(Gravity.CENTER);
+        status.setPadding(0, 0, 0, 30);
+
+        // Кнопка теста
+        Button testButton = new Button(this);
+        testButton.setText("TEST NODE");
+        testButton.setTextSize(16);
+
+        testButton.setOnClickListener(v -> {
+
+            status.setText("●  SENDING TASK...");
+            status.setTextColor(Color.YELLOW);
+
+            new Thread(() -> {
+
+                SiriusTask task =
+                        siriusRouter.createAddTask(15, 27);
+
+                String result =
+                        siriusClient.sendTask(
+                                siriusRouter.getNodeHost(),
+                                siriusRouter.getNodePort(),
+                                task
+                        );
+
+                runOnUiThread(() -> {
+
+                    if (result.equals("RESULT:42")) {
+
+                        status.setText(
+                                "●  NODE RESULT: 42"
+                        );
+
+                        status.setTextColor(
+                                Color.rgb(100, 255, 120)
+                        );
+
+                    } else {
+
+                        status.setText(
+                                "●  " + result
+                        );
+
+                        status.setTextColor(Color.RED);
+                    }
+                });
+
+            }).start();
+        });
 
         content.addView(title);
         content.addView(subtitle);
         content.addView(status);
+        content.addView(testButton);
 
         FrameLayout.LayoutParams contentParams =
                 new FrameLayout.LayoutParams(
@@ -112,6 +163,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+
         super.onDestroy();
 
         if (siriusNode != null) {
