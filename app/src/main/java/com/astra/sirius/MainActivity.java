@@ -28,20 +28,27 @@ public class MainActivity extends Activity {
         siriusNode = new SiriusNode();
         siriusNode.start();
 
-        // Router знает адрес Vivo
+        // Создаём Router с первым узлом — Vivo
         siriusRouter = new SiriusRouter(
                 "192.168.100.27",
                 8766
         );
 
-        // Client отправляет задачи
+        // Добавляем второй узел — Samsung
+        siriusRouter.addNode(
+                "Samsung",
+                "192.168.100.5",
+                8766
+        );
+
+        // Client
         siriusClient = new SiriusClient();
 
         // Главный контейнер
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
 
-        // Фон
+        // Фоновая картинка
         ImageView background = new ImageView(this);
         background.setImageResource(R.drawable.sirius_background);
         background.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -66,13 +73,13 @@ public class MainActivity extends Activity {
                 )
         );
 
-        // Контент
+        // Центральный блок
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER);
         content.setPadding(40, 40, 40, 40);
 
-        // Заголовок
+        // Название
         TextView title = new TextView(this);
         title.setText("✦ SIRIUS ✦");
         title.setTextColor(Color.WHITE);
