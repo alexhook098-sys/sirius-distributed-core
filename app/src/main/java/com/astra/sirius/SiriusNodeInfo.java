@@ -17,6 +17,7 @@ public class SiriusNodeInfo {
         this.name = name;
         this.host = host;
         this.port = port;
+
         this.online = false;
         this.latencyMs = -1;
     }
@@ -37,7 +38,9 @@ public class SiriusNodeInfo {
         return online;
     }
 
-    public void setOnline(boolean online) {
+    public void setOnline(
+            boolean online
+    ) {
         this.online = online;
     }
 
@@ -45,7 +48,9 @@ public class SiriusNodeInfo {
         return latencyMs;
     }
 
-    public void setLatencyMs(long latencyMs) {
+    public void setLatencyMs(
+            long latencyMs
+    ) {
         this.latencyMs = latencyMs;
     }
 
@@ -53,13 +58,47 @@ public class SiriusNodeInfo {
         return host + ":" + port;
     }
 
+    // Оценка состояния узла
+    public String getHealthStatus() {
+
+        if (!online) {
+            return "OFFLINE";
+        }
+
+        if (latencyMs < 0) {
+            return "UNKNOWN";
+        }
+
+        if (latencyMs <= 10) {
+            return "EXCELLENT";
+        }
+
+        if (latencyMs <= 50) {
+            return "GOOD";
+        }
+
+        if (latencyMs <= 200) {
+            return "FAIR";
+        }
+
+        if (latencyMs <= 500) {
+            return "SLOW";
+        }
+
+        return "VERY SLOW";
+    }
+
     @Override
     public String toString() {
+
         return "SiriusNodeInfo{" +
                 "name='" + name + '\'' +
                 ", address='" + getAddress() + '\'' +
                 ", online=" + online +
                 ", latencyMs=" + latencyMs +
+                ", health='" +
+                getHealthStatus() +
+                '\'' +
                 '}';
     }
-}
+    }
