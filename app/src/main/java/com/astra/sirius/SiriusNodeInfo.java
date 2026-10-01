@@ -9,6 +9,12 @@ public class SiriusNodeInfo {
     private boolean online;
     private long latencyMs;
 
+    // Возможности устройства
+    private long totalRamMb;
+    private long availableRamMb;
+    private int cpuCores;
+    private String cpuArchitecture;
+
     public SiriusNodeInfo(
             String name,
             String host,
@@ -20,6 +26,12 @@ public class SiriusNodeInfo {
 
         this.online = false;
         this.latencyMs = -1;
+
+        // Пока неизвестны
+        this.totalRamMb = -1;
+        this.availableRamMb = -1;
+        this.cpuCores = -1;
+        this.cpuArchitecture = "UNKNOWN";
     }
 
     public String getName() {
@@ -38,9 +50,7 @@ public class SiriusNodeInfo {
         return online;
     }
 
-    public void setOnline(
-            boolean online
-    ) {
+    public void setOnline(boolean online) {
         this.online = online;
     }
 
@@ -48,10 +58,46 @@ public class SiriusNodeInfo {
         return latencyMs;
     }
 
-    public void setLatencyMs(
-            long latencyMs
-    ) {
+    public void setLatencyMs(long latencyMs) {
         this.latencyMs = latencyMs;
+    }
+
+    // RAM
+
+    public long getTotalRamMb() {
+        return totalRamMb;
+    }
+
+    public void setTotalRamMb(long totalRamMb) {
+        this.totalRamMb = totalRamMb;
+    }
+
+    public long getAvailableRamMb() {
+        return availableRamMb;
+    }
+
+    public void setAvailableRamMb(long availableRamMb) {
+        this.availableRamMb = availableRamMb;
+    }
+
+    // CPU
+
+    public int getCpuCores() {
+        return cpuCores;
+    }
+
+    public void setCpuCores(int cpuCores) {
+        this.cpuCores = cpuCores;
+    }
+
+    public String getCpuArchitecture() {
+        return cpuArchitecture;
+    }
+
+    public void setCpuArchitecture(
+            String cpuArchitecture
+    ) {
+        this.cpuArchitecture = cpuArchitecture;
     }
 
     public String getAddress() {
@@ -96,9 +142,12 @@ public class SiriusNodeInfo {
                 ", address='" + getAddress() + '\'' +
                 ", online=" + online +
                 ", latencyMs=" + latencyMs +
-                ", health='" +
-                getHealthStatus() +
-                '\'' +
+                ", health='" + getHealthStatus() + '\'' +
+                ", totalRamMb=" + totalRamMb +
+                ", availableRamMb=" + availableRamMb +
+                ", cpuCores=" + cpuCores +
+                ", cpuArchitecture='" +
+                cpuArchitecture + '\'' +
                 '}';
     }
     }
