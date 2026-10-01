@@ -6,6 +6,8 @@ public class SiriusNodeInfo {
     private final String host;
     private final int port;
 
+    private boolean online;
+
     public SiriusNodeInfo(
             String name,
             String host,
@@ -14,6 +16,7 @@ public class SiriusNodeInfo {
         this.name = name;
         this.host = host;
         this.port = port;
+        this.online = false;
     }
 
     public String getName() {
@@ -28,8 +31,24 @@ public class SiriusNodeInfo {
         return port;
     }
 
+    public boolean isOnline() {
+        return online;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
+    public String getAddress() {
+        return host + ":" + port;
+    }
+
     @Override
     public String toString() {
-        return name + " (" + host + ":" + port + ")";
+        return "SiriusNodeInfo{" +
+                "name='" + name + '\'' +
+                ", address='" + getAddress() + '\'' +
+                ", online=" + online +
+                '}';
     }
 }
