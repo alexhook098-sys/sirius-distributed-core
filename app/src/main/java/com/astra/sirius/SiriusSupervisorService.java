@@ -8,7 +8,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 
-public class SiriusSupervisorService extends Service {
+public class SiriusSupervisorService
+        extends Service {
 
     private static final String CHANNEL_ID =
             "sirius_supervisor";
@@ -20,6 +21,8 @@ public class SiriusSupervisorService extends Service {
 
     private volatile boolean running = false;
 
+    private SiriusRouter router;
+
 
     @Override
     public void onCreate() {
@@ -28,9 +31,28 @@ public class SiriusSupervisorService extends Service {
 
         createNotificationChannel();
 
+        router = new SiriusRouter(
+                "192.168.100.27",
+                8766
+        );
+
+        router.addNode(
+                "Samsung",
+                "192.168.100.5",
+                8766
+        );
+
+        router.addNode(
+                "Huawei",
+                "192.168.100.3",
+                8766
+        );
+
         startForeground(
                 NOTIFICATION_ID,
-                createNotification()
+                createNotification(
+                        "Supervisor ONLINE"
+                )
         );
 
         running = true;
@@ -49,8 +71,10 @@ public class SiriusSupervisorService extends Service {
 
     private void runSupervisor() {
 
-        while (running &&
-                !Thread.currentThread().isInterrupted()) {
+        while (
+                running &&
+                !Thread.currentThread().isInterrupted()
+        ) {
 
             try {
 
@@ -86,18 +110,46 @@ public class SiriusSupervisorService extends Service {
                 "[SIRIUS SUPERVISOR] Checking nodes..."
         );
 
-        // Здесь позже будет:
-        //
-        // 1. Проверка Vivo
-        // 2. Проверка Samsung
-        // 3. Проверка Huawei
-        // 4. Проверка ASTRA
-        // 5. Проверка Voice Bridge
-        // 6. Автоматическое восстановление
+        if (router == null) {
+            return;
+        }
+
+        router.checkNodes();
+
+        int online = 0;
+        int total = router.getNodes().size();
+
+        for (SiriusNodeInfo node :
+                router.getNodes()) {
+
+            if (node.isOnline()) {
+                online++;
+            }
+
+            System.out.println(
+                    "[SIRIUS SUPERVISOR] "
+                            + node.getName()
+                            + " = "
+                            + (
+                            node.isOnline()
+                                    ? "ONLINE"
+                                    : "OFFLINE"
+                    )
+            );
+        }
+
+        updateNotification(
+                "Nodes ONLINE: "
+                        + online
+                        + "/"
+                        + total
+        );
     }
 
 
-    private Notification createNotification() {
+    private Notification createNotification(
+            String text
+    ) {
 
         return new Notification.Builder(
                 this,
@@ -107,20 +159,42 @@ public class SiriusSupervisorService extends Service {
                         "SIRIUS Supervisor"
                 )
                 .setContentText(
-                        "Distributed Core monitoring"
+                        text
                 )
                 .setSmallIcon(
-                        android.R.drawable.ic_menu_info_details
+                        android.R.drawable
+                                .ic_menu_info_details
                 )
                 .setOngoing(true)
                 .build();
     }
 
 
+    private void updateNotification(
+            String text
+    ) {
+
+        NotificationManager manager =
+                getSystemService(
+                        NotificationManager.class
+                );
+
+        if (manager != null) {
+
+            manager.notify(
+                    NOTIFICATION_ID,
+                    createNotification(text)
+            );
+        }
+    }
+
+
     private void createNotificationChannel() {
 
-        if (Build.VERSION.SDK_INT >=
-                Build.VERSION_CODES.O) {
+        if (
+                Build.VERSION.SDK_INT >=
+                        Build.VERSION_CODES.O
+        ) {
 
             NotificationChannel channel =
                     new NotificationChannel(
@@ -185,4 +259,4 @@ public class SiriusSupervisorService extends Service {
 
         return null;
     }
-          }
+                    }
