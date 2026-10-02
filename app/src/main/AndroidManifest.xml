@@ -10,9 +10,17 @@
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Foreground Supervisor -->
+    <!-- Foreground Service -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Специальный тип Foreground Service -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- Уведомления Supervisor -->
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Автозапуск после перезагрузки -->
     <uses-permission
@@ -47,10 +55,17 @@
         <service
             android:name=".SiriusSupervisorService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="SIRIUS distributed core supervisor and node monitoring" />
+
+        </service>
 
 
-        <!-- Автозапуск Supervisor -->
+        <!-- Автозапуск Supervisor после перезагрузки -->
         <receiver
             android:name=".SiriusBootReceiver"
             android:enabled="true"
