@@ -32,6 +32,18 @@ public class SiriusTaskDispatcher {
         SiriusNodeInfo bestNode = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 
+        // Требования текущей задачи
+        long requiredRam =
+                task.getRequiredRamMb();
+
+        System.out.println(
+                "[SIRIUS] TASK REQUIREMENTS: "
+                        + task.getType()
+                        + " | RAM="
+                        + requiredRam
+                        + " MB"
+        );
+
         // Анализируем все доступные узлы
         for (SiriusNodeInfo node :
                 router.getNodes()) {
@@ -51,23 +63,37 @@ public class SiriusTaskDispatcher {
             }
 
             /*
+             * CAPABILITY CHECK
+             *
+             * Если узлу не хватает свободной RAM
+             * для задачи — пропускаем его.
+             */
+
+            if (freeRam < requiredRam) {
+
+                System.out.println(
+                        "[SIRIUS] NODE REJECTED: "
+                                + node.getName()
+                                + " | FREE RAM="
+                                + freeRam
+                                + " MB"
+                                + " | REQUIRED="
+                                + requiredRam
+                                + " MB"
+                );
+
+                continue;
+            }
+
+            /*
              * SMART SCORE
              *
              * Свободная RAM повышает оценку.
-             * Большая задержка снижает оценку.
-             *
-             * RAM имеет больший вес,
-             * потому что для тяжёлых задач
-             * свободная память важнее ping.
+             * Меньшая задержка повышает оценку.
              */
 
-            double ramScore = 0;
-
-            if (freeRam > 0) {
-
-                ramScore =
-                        freeRam * 10.0;
-            }
+            double ramScore =
+                    freeRam * 10.0;
 
             double latencyScore =
                     10000.0
@@ -102,7 +128,7 @@ public class SiriusTaskDispatcher {
 
             lastNodeName = "NONE";
 
-            return "ERROR:NO_ONLINE_NODES";
+            return "ERROR:NO_CAPABLE_NODES";
         }
 
         // Запоминаем выбранный узел
