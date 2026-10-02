@@ -3,22 +3,21 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Сетевое соединение SIRIUS -->
+    <!-- Сетевое соединение -->
     <uses-permission
         android:name="android.permission.INTERNET" />
 
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Foreground Service -->
+    <!-- Foreground Services -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <!-- Специальный тип Foreground Service -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
-    <!-- Уведомления Supervisor -->
+    <!-- Уведомления -->
     <uses-permission
         android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -65,7 +64,21 @@
         </service>
 
 
-        <!-- Автозапуск Supervisor после перезагрузки -->
+        <!-- SIRIUS Node -->
+        <service
+            android:name=".SiriusNodeService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="SIRIUS distributed compute node service" />
+
+        </service>
+
+
+        <!-- Автозапуск Supervisor -->
         <receiver
             android:name=".SiriusBootReceiver"
             android:enabled="true"
