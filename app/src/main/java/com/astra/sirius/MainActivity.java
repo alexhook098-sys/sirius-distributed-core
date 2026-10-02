@@ -1,4 +1,3 @@
-
 package com.astra.sirius;
 
 import android.app.Activity;
@@ -16,7 +15,6 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-    private SiriusNode siriusNode;
     private SiriusRouter siriusRouter;
     private SiriusClient siriusClient;
     private SiriusTaskDispatcher dispatcher;
@@ -24,13 +22,53 @@ public class MainActivity extends Activity {
     private TextView status;
     private TextView nodesStatus;
 
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(
+            Bundle savedInstanceState
+    ) {
+
         super.onCreate(savedInstanceState);
 
-        // ==========================================
+
+        // =====================================================
+        // SIRIUS NODE SERVICE
+        // =====================================================
+
+        try {
+
+            Intent nodeIntent =
+                    new Intent(
+                            this,
+                            SiriusNodeService.class
+                    );
+
+            if (android.os.Build.VERSION.SDK_INT >=
+                    android.os.Build.VERSION_CODES.O) {
+
+                startForegroundService(
+                        nodeIntent
+                );
+
+            } else {
+
+                startService(
+                        nodeIntent
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "[SIRIUS] NODE SERVICE ERROR: "
+                            + e.getMessage()
+            );
+        }
+
+
+        // =====================================================
         // SIRIUS SUPERVISOR
-        // ==========================================
+        // =====================================================
 
         try {
 
@@ -63,18 +101,9 @@ public class MainActivity extends Activity {
         }
 
 
-        // ==========================================
-        // Локальный узел SIRIUS
-        // ==========================================
-
-        siriusNode = new SiriusNode();
-
-        siriusNode.start();
-
-
-        // ==========================================
-        // Router
-        // ==========================================
+        // =====================================================
+        // ROUTER
+        // =====================================================
 
         siriusRouter = new SiriusRouter(
                 "192.168.100.27",
@@ -100,17 +129,17 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Client
-        // ==========================================
+        // =====================================================
+        // CLIENT
+        // =====================================================
 
         siriusClient =
                 new SiriusClient();
 
 
-        // ==========================================
-        // Dispatcher
-        // ==========================================
+        // =====================================================
+        // DISPATCHER
+        // =====================================================
 
         dispatcher =
                 new SiriusTaskDispatcher(
@@ -119,9 +148,9 @@ public class MainActivity extends Activity {
                 );
 
 
-        // ==========================================
-        // Главный контейнер
-        // ==========================================
+        // =====================================================
+        // MAIN CONTAINER
+        // =====================================================
 
         FrameLayout root =
                 new FrameLayout(this);
@@ -131,9 +160,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Фон
-        // ==========================================
+        // =====================================================
+        // BACKGROUND
+        // =====================================================
 
         ImageView background =
                 new ImageView(this);
@@ -155,9 +184,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Затемнение
-        // ==========================================
+        // =====================================================
+        // DARK OVERLAY
+        // =====================================================
 
         View darkOverlay =
                 new View(this);
@@ -180,9 +209,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Центральный блок
-        // ==========================================
+        // =====================================================
+        // CONTENT
+        // =====================================================
 
         LinearLayout content =
                 new LinearLayout(this);
@@ -203,9 +232,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Заголовок
-        // ==========================================
+        // =====================================================
+        // TITLE
+        // =====================================================
 
         TextView title =
                 new TextView(this);
@@ -232,9 +261,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Подзаголовок
-        // ==========================================
+        // =====================================================
+        // SUBTITLE
+        // =====================================================
 
         TextView subtitle =
                 new TextView(this);
@@ -263,9 +292,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Главный статус
-        // ==========================================
+        // =====================================================
+        // STATUS
+        // =====================================================
 
         status =
                 new TextView(this);
@@ -298,9 +327,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Информация об узлах
-        // ==========================================
+        // =====================================================
+        // NODES STATUS
+        // =====================================================
 
         nodesStatus =
                 new TextView(this);
@@ -329,9 +358,9 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
+        // =====================================================
         // CHECK NODES
-        // ==========================================
+        // =====================================================
 
         Button checkButton =
                 new Button(this);
@@ -351,35 +380,31 @@ public class MainActivity extends Activity {
                             "Checking nodes..."
                     );
 
-                    new Thread(
-                            () -> {
+                    new Thread(() -> {
 
-                                String result =
-                                        siriusRouter
-                                                .getNodesStatus();
+                        String result =
+                                siriusRouter
+                                        .getNodesStatus();
 
-                                String detailedResult =
-                                        buildDetailedNodeStatus(
-                                                result
-                                        );
-
-                                runOnUiThread(
-                                        () ->
-                                                nodesStatus
-                                                        .setText(
-                                                                detailedResult
-                                                        )
+                        String detailedResult =
+                                buildDetailedNodeStatus(
+                                        result
                                 );
 
-                            }
-                    ).start();
+                        runOnUiThread(() ->
+                                nodesStatus.setText(
+                                        detailedResult
+                                )
+                        );
+
+                    }).start();
                 }
         );
 
 
-        // ==========================================
+        // =====================================================
         // TEST DISTRIBUTION
-        // ==========================================
+        // =====================================================
 
         Button testButton =
                 new Button(this);
@@ -403,73 +428,68 @@ public class MainActivity extends Activity {
                             Color.YELLOW
                     );
 
-                    new Thread(
-                            () -> {
+                    new Thread(() -> {
 
-                                SiriusTask task =
-                                        siriusRouter
-                                                .createAddTask(
-                                                        15,
-                                                        27
-                                                );
+                        SiriusTask task =
+                                siriusRouter
+                                        .createAddTask(
+                                                15,
+                                                27
+                                        );
 
-                                String result =
-                                        dispatcher
-                                                .dispatch(
-                                                        task
-                                                );
-
-                                String executedBy =
-                                        dispatcher
-                                                .getLastNodeName();
-
-                                runOnUiThread(
-                                        () -> {
-
-                                            if (result.equals(
-                                                    "RESULT:42"
-                                            )) {
-
-                                                status.setText(
-                                                        "●  TASK RESULT: 42\n"
-                                                                + "EXECUTED BY: "
-                                                                + executedBy
-                                                );
-
-                                                status.setTextColor(
-                                                        Color.rgb(
-                                                                100,
-                                                                255,
-                                                                120
-                                                        )
-                                                );
-
-                                            } else {
-
-                                                status.setText(
-                                                        "●  "
-                                                                + result
-                                                                + "\n"
-                                                                + "NODE: "
-                                                                + executedBy
-                                                );
-
-                                                status.setTextColor(
-                                                        Color.RED
-                                                );
-                                            }
-                                        }
+                        String result =
+                                dispatcher.dispatch(
+                                        task
                                 );
 
+                        String executedBy =
+                                dispatcher
+                                        .getLastNodeName();
+
+                        runOnUiThread(() -> {
+
+                            if (result.equals(
+                                    "RESULT:42"
+                            )) {
+
+                                status.setText(
+                                        "●  TASK RESULT: 42\n"
+                                                + "EXECUTED BY: "
+                                                + executedBy
+                                );
+
+                                status.setTextColor(
+                                        Color.rgb(
+                                                100,
+                                                255,
+                                                120
+                                        )
+                                );
+
+                            } else {
+
+                                status.setText(
+                                        "●  "
+                                                + result
+                                                + "\n"
+                                                + "NODE: "
+                                                + executedBy
+                                );
+
+                                status.setTextColor(
+                                        Color.RED
+                                );
                             }
-                    ).start();
+                        });
+
+                    }).start();
                 }
         );
 
 
-        // ==========================================
-        // Добавляем элементы
-        // ==========================================
+        // =====================================================
+        // ADD UI
+        // =====================================================
 
         content.addView(
                 title
@@ -496,10 +516,6 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Параметры центрального блока
-        // ==========================================
-
         FrameLayout.LayoutParams contentParams =
                 new FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.MATCH_PARENT,
@@ -521,37 +537,34 @@ public class MainActivity extends Activity {
         );
 
 
-        // ==========================================
-        // Первая проверка узлов
-        // ==========================================
+        // =====================================================
+        // FIRST NODE CHECK
+        // =====================================================
 
-        new Thread(
-                () -> {
+        new Thread(() -> {
 
-                    String result =
-                            siriusRouter
-                                    .getNodesStatus();
+            String result =
+                    siriusRouter
+                            .getNodesStatus();
 
-                    String detailedResult =
-                            buildDetailedNodeStatus(
-                                    result
-                            );
-
-                    runOnUiThread(
-                            () ->
-                                    nodesStatus.setText(
-                                            detailedResult
-                                    )
+            String detailedResult =
+                    buildDetailedNodeStatus(
+                            result
                     );
 
-                }
-        ).start();
+            runOnUiThread(() ->
+                    nodesStatus.setText(
+                            detailedResult
+                    )
+            );
+
+        }).start();
     }
 
 
-    // ==========================================
-    // Расширенная информация об узлах
-    // ==========================================
+    // =========================================================
+    // DETAILED NODE STATUS
+    // =========================================================
 
     private String buildDetailedNodeStatus(
             String basicStatus
@@ -617,7 +630,10 @@ public class MainActivity extends Activity {
                     );
 
 
-                    if (node.getAvailableRamMb() >= 0) {
+                    if (
+                            node.getAvailableRamMb()
+                                    >= 0
+                    ) {
 
                         result.append(
                                 "  |  FREE: "
@@ -640,7 +656,10 @@ public class MainActivity extends Activity {
 
                 // CPU
 
-                if (node.getCpuCores() >= 0) {
+                if (
+                        node.getCpuCores()
+                                >= 0
+                ) {
 
                     result.append(
                             "CPU: "
@@ -660,15 +679,17 @@ public class MainActivity extends Activity {
                 }
 
 
-                // Архитектура
+                // ARCHITECTURE
 
-                if (node.getCpuArchitecture()
-                        != null
-                        &&
+                if (
+                        node.getCpuArchitecture()
+                                != null
+                                &&
                         !node.getCpuArchitecture()
                                 .equals(
                                         "UNKNOWN"
-                                )) {
+                                )
+                ) {
 
                     result.append(
                             "ARCH: "
@@ -682,6 +703,7 @@ public class MainActivity extends Activity {
                             "\n"
                     );
                 }
+
 
             } else {
 
@@ -704,22 +726,5 @@ public class MainActivity extends Activity {
         return result
                 .toString()
                 .trim();
-    }
-
-
-    // ==========================================
-    // Закрытие приложения
-    // ==========================================
-
-    @Override
-    protected void onDestroy() {
-
-        super.onDestroy();
-
-
-        if (siriusNode != null) {
-
-            siriusNode.stop();
-        }
     }
                 }
