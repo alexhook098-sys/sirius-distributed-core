@@ -111,6 +111,8 @@ public class SiriusRouter {
                     (endTime - startTime)
                             / 1_000_000;
 
+            socket.close();
+
             node.setLatencyMs(latency);
             node.setOnline(true);
 
