@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -184,12 +187,34 @@ public class SiriusSupervisorService extends Service {
                     ),
                     1000
             );
+            socket.setSoTimeout(1500);
+
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            PrintWriter writer =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
+
+            writer.println("PING");
+
+            String response = reader.readLine();
+
+            if (!"PONG".equals(response)) {
+                throw new IllegalStateException(
+                        "Invalid PING response: " + response
+                );
+            }
 
             long latency =
                     System.currentTimeMillis()
                             - startTime;
-
-            socket.close();
 
             System.out.println(
                     "[SIRIUS SUPERVISOR] "
