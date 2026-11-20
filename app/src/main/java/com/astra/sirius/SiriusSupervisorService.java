@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -18,6 +21,11 @@ public class SiriusSupervisorService extends Service {
 
     private static final int NOTIFICATION_ID =
             1001;
+
+    private static final int NODE_PORT = 8766;
+    private static final int NODE_COUNT = 4;
+    private static final int CONNECT_TIMEOUT_MS = 1200;
+    private static final int READ_TIMEOUT_MS = 1200;
 
     private Thread supervisorThread;
 
@@ -97,68 +105,29 @@ public class SiriusSupervisorService extends Service {
 
         int onlineNodes = 0;
 
-
-        // =====================================================
-        // VIVO
-        // =====================================================
-
-        if (
-                checkNode(
-                        "Vivo",
-                        "192.168.100.27",
-                        8766
-                )
-        ) {
-
+        if (checkNode("Vivo", "192.168.100.27", NODE_PORT)) {
             onlineNodes++;
         }
 
-
-        // =====================================================
-        // SAMSUNG
-        // =====================================================
-
-        if (
-                checkNode(
-                        "Samsung",
-                        "192.168.100.5",
-                        8766
-                )
-        ) {
-
+        if (checkNode("Samsung", "192.168.100.5", NODE_PORT)) {
             onlineNodes++;
         }
 
-
-        // =====================================================
-        // HUAWEI
-        // =====================================================
-
-        if (
-                checkNode(
-                        "Huawei",
-                        "192.168.100.3",
-                        8766
-                )
-        ) {
-
+        if (checkNode("Huawei", "192.168.100.3", NODE_PORT)) {
             onlineNodes++;
         }
 
+        if (checkNode("Redmi Note 7", "192.168.100.53", NODE_PORT)) {
+            onlineNodes++;
+        }
 
-        // =====================================================
-        // UPDATE NOTIFICATION
-        // =====================================================
-
-        updateNotification(
-                onlineNodes
-        );
-
+        updateNotification(onlineNodes);
 
         System.out.println(
                 "[SIRIUS SUPERVISOR] NODES ONLINE: "
                         + onlineNodes
-                        + "/3"
+                        + "/"
+                        + NODE_COUNT
         );
     }
 
@@ -169,27 +138,48 @@ public class SiriusSupervisorService extends Service {
             int port
     ) {
 
-        Socket socket =
-                new Socket();
+        long startTime = System.nanoTime();
 
-        try {
-
-            long startTime =
-                    System.currentTimeMillis();
+        try (
+                Socket socket = new Socket()
+        ) {
 
             socket.connect(
                     new InetSocketAddress(
                             host,
                             port
                     ),
-                    1000
+                    CONNECT_TIMEOUT_MS
             );
 
-            long latency =
-                    System.currentTimeMillis()
-                            - startTime;
+            socket.setSoTimeout(READ_TIMEOUT_MS);
 
-            socket.close();
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            PrintWriter writer =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
+
+            writer.println("PING");
+
+            String response = reader.readLine();
+
+            if (!"PONG".equals(response)) {
+                throw new java.io.IOException(
+                        "Unexpected PING response: " + response
+                );
+            }
+
+            long latency =
+                    (System.nanoTime() - startTime)
+                            / 1_000_000;
 
             System.out.println(
                     "[SIRIUS SUPERVISOR] "
@@ -203,17 +193,11 @@ public class SiriusSupervisorService extends Service {
 
         } catch (Exception e) {
 
-            try {
-
-                socket.close();
-
-            } catch (Exception ignored) {
-            }
-
             System.out.println(
                     "[SIRIUS SUPERVISOR] "
                             + name
-                            + " OFFLINE"
+                            + " OFFLINE: "
+                            + e.getMessage()
             );
 
             return false;
@@ -234,18 +218,15 @@ public class SiriusSupervisorService extends Service {
             return;
         }
 
-
         String text =
                 "Nodes ONLINE: "
                         + onlineNodes
-                        + "/3";
-
+                        + "/"
+                        + NODE_COUNT;
 
         manager.notify(
                 NOTIFICATION_ID,
-                createNotification(
-                        text
-                )
+                createNotification(text)
         );
     }
 
@@ -261,9 +242,7 @@ public class SiriusSupervisorService extends Service {
                 .setContentTitle(
                         "SIRIUS Supervisor"
                 )
-                .setContentText(
-                        text
-                )
+                .setContentText(text)
                 .setSmallIcon(
                         android.R.drawable
                                 .ic_menu_info_details
@@ -292,18 +271,14 @@ public class SiriusSupervisorService extends Service {
                     "SIRIUS system monitoring"
             );
 
-
             NotificationManager manager =
                     getSystemService(
                             NotificationManager.class
                     );
 
-
             if (manager != null) {
 
-                manager.createNotificationChannel(
-                        channel
-                );
+                manager.createNotificationChannel(channel);
             }
         }
     }
@@ -325,19 +300,13 @@ public class SiriusSupervisorService extends Service {
 
         running = false;
 
-
-        if (
-                supervisorThread != null
-        ) {
-
+        if (supervisorThread != null) {
             supervisorThread.interrupt();
         }
-
 
         System.out.println(
                 "[SIRIUS SUPERVISOR] STOPPED"
         );
-
 
         super.onDestroy();
     }
@@ -350,4 +319,4 @@ public class SiriusSupervisorService extends Service {
 
         return null;
     }
-                    }
+}
