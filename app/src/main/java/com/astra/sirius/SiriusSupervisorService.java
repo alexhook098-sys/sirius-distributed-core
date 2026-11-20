@@ -216,6 +216,8 @@ public class SiriusSupervisorService extends Service {
                     System.currentTimeMillis()
                             - startTime;
 
+            socket.close();
+
             System.out.println(
                     "[SIRIUS SUPERVISOR] "
                             + name
