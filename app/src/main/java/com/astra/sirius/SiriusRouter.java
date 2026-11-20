@@ -10,6 +10,9 @@ import java.util.List;
 
 public class SiriusRouter {
 
+    private static final int CONNECT_TIMEOUT_MS = 1200;
+    private static final int READ_TIMEOUT_MS = 1200;
+
     private final List<SiriusNodeInfo> nodes;
 
     public SiriusRouter(
@@ -23,6 +26,14 @@ public class SiriusRouter {
                 new SiriusNodeInfo(
                         "Vivo",
                         nodeHost,
+                        nodePort
+                )
+        );
+
+        nodes.add(
+                new SiriusNodeInfo(
+                        "Redmi Note 7",
+                        "192.168.100.53",
                         nodePort
                 )
         );
@@ -47,7 +58,7 @@ public class SiriusRouter {
         return nodes;
     }
 
-    // Проверяем все узлы
+    // Проверяем все узлы настоящим протокольным PING/PONG.
     public void checkNodes() {
 
         for (SiriusNodeInfo node : nodes) {
@@ -60,37 +71,56 @@ public class SiriusRouter {
         }
     }
 
-    // Проверка узла + измерение задержки
+    // Измеряем время полного обмена PING/PONG.
     private boolean checkNode(
             SiriusNodeInfo node
     ) {
 
-        Socket socket = new Socket();
+        long startTime = System.nanoTime();
 
-        try {
-
-            long startTime =
-                    System.nanoTime();
+        try (
+                Socket socket = new Socket()
+        ) {
 
             socket.connect(
                     new InetSocketAddress(
                             node.getHost(),
                             node.getPort()
                     ),
-                    1000
+                    CONNECT_TIMEOUT_MS
             );
 
-            long endTime =
-                    System.nanoTime();
+            socket.setSoTimeout(READ_TIMEOUT_MS);
+
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            PrintWriter writer =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
+
+            writer.println("PING");
+
+            String response = reader.readLine();
+
+            if (!"PONG".equals(response)) {
+                throw new java.io.IOException(
+                        "Unexpected PING response: " + response
+                );
+            }
 
             long latency =
-                    (endTime - startTime)
+                    (System.nanoTime() - startTime)
                             / 1_000_000;
 
             node.setLatencyMs(latency);
             node.setOnline(true);
-
-            socket.close();
 
             return true;
 
@@ -99,32 +129,35 @@ public class SiriusRouter {
             node.setOnline(false);
             node.setLatencyMs(-1);
 
-            try {
-                socket.close();
-            } catch (Exception ignored) {
-            }
+            System.out.println(
+                    "[SIRIUS] PING ERROR "
+                            + node.getName()
+                            + ": "
+                            + e.getMessage()
+            );
 
             return false;
         }
     }
 
-    // Запрашиваем характеристики устройства
+    // Запрашиваем характеристики устройства.
     private void requestNodeInfo(
             SiriusNodeInfo node
     ) {
 
-        try {
-
-            Socket socket =
-                    new Socket();
+        try (
+                Socket socket = new Socket()
+        ) {
 
             socket.connect(
                     new InetSocketAddress(
                             node.getHost(),
                             node.getPort()
                     ),
-                    1000
+                    CONNECT_TIMEOUT_MS
             );
+
+            socket.setSoTimeout(READ_TIMEOUT_MS);
 
             BufferedReader reader =
                     new BufferedReader(
@@ -141,13 +174,12 @@ public class SiriusRouter {
 
             writer.println("INFO");
 
-            String response =
-                    reader.readLine();
-
-            socket.close();
+            String response = reader.readLine();
 
             if (response == null) {
-                return;
+                throw new java.io.IOException(
+                        "Empty INFO response"
+                );
             }
 
             parseNodeInfo(
@@ -166,7 +198,7 @@ public class SiriusRouter {
         }
     }
 
-    // Разбираем INFO-ответ
+    // Разбираем INFO-ответ.
     private void parseNodeInfo(
             SiriusNodeInfo node,
             String response
@@ -183,63 +215,50 @@ public class SiriusRouter {
 
             for (String part : parts) {
 
-                if (part.startsWith(
-                        "RAM_TOTAL="
-                )) {
+                if (part.startsWith("RAM_TOTAL=")) {
 
                     long value =
                             Long.parseLong(
                                     part.substring(
-                                            "RAM_TOTAL="
-                                                    .length()
+                                            "RAM_TOTAL=".length()
                                     )
                             );
 
                     node.setTotalRamMb(value);
                 }
 
-                else if (part.startsWith(
-                        "RAM_AVAILABLE="
-                )) {
+                else if (part.startsWith("RAM_AVAILABLE=")) {
 
                     long value =
                             Long.parseLong(
                                     part.substring(
-                                            "RAM_AVAILABLE="
-                                                    .length()
+                                            "RAM_AVAILABLE=".length()
                                     )
                             );
 
                     node.setAvailableRamMb(value);
                 }
 
-                else if (part.startsWith(
-                        "CPU_CORES="
-                )) {
+                else if (part.startsWith("CPU_CORES=")) {
 
                     int value =
                             Integer.parseInt(
                                     part.substring(
-                                            "CPU_CORES="
-                                                    .length()
+                                            "CPU_CORES=".length()
                                     )
                             );
 
                     node.setCpuCores(value);
                 }
 
-                else if (part.startsWith(
-                        "ARCH="
-                )) {
+                else if (part.startsWith("ARCH=")) {
 
                     String value =
                             part.substring(
                                     "ARCH=".length()
                             );
 
-                    node.setCpuArchitecture(
-                            value
-                    );
+                    node.setCpuArchitecture(value);
                 }
             }
 
@@ -252,7 +271,7 @@ public class SiriusRouter {
         }
     }
 
-    // Первый доступный узел
+    // Первый доступный узел.
     public SiriusNodeInfo selectAvailableNode() {
 
         for (SiriusNodeInfo node : nodes) {
@@ -306,7 +325,7 @@ public class SiriusRouter {
         return node.getPort();
     }
 
-    // Создание тестовой задачи
+    // Создание тестовой задачи.
     public SiriusTask createAddTask(
             int a,
             int b
@@ -318,7 +337,7 @@ public class SiriusRouter {
         );
     }
 
-    // Статус всех узлов
+    // Статус всех узлов.
     public String getNodesStatus() {
 
         checkNodes();
@@ -328,41 +347,20 @@ public class SiriusRouter {
 
         for (SiriusNodeInfo node : nodes) {
 
-            result.append(
-                    node.getName()
-            );
+            result.append(node.getName());
 
             if (node.isOnline()) {
 
-                result.append(
-                        "  ● ONLINE"
-                );
-
-                result.append(
-                        "  • "
-                );
-
-                result.append(
-                        node.getLatencyMs()
-                );
-
-                result.append(
-                        " ms"
-                );
-
-                result.append(
-                        "  • "
-                );
-
-                result.append(
-                        node.getHealthStatus()
-                );
+                result.append("  ● ONLINE");
+                result.append("  • ");
+                result.append(node.getLatencyMs());
+                result.append(" ms");
+                result.append("  • ");
+                result.append(node.getHealthStatus());
 
             } else {
 
-                result.append(
-                        "  ● OFFLINE"
-                );
+                result.append("  ● OFFLINE");
             }
 
             result.append("\n");
@@ -378,4 +376,4 @@ public class SiriusRouter {
                 "nodes=" + nodes +
                 '}';
     }
-                }
+}
