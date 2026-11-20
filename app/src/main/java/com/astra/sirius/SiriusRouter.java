@@ -79,6 +79,30 @@ public class SiriusRouter {
                     ),
                     1000
             );
+            socket.setSoTimeout(1500);
+
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            PrintWriter writer =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
+
+            writer.println("PING");
+
+            String response = reader.readLine();
+
+            if (!"PONG".equals(response)) {
+                throw new IllegalStateException(
+                        "Invalid PING response: " + response
+                );
+            }
 
             long endTime =
                     System.nanoTime();
@@ -89,8 +113,6 @@ public class SiriusRouter {
 
             node.setLatencyMs(latency);
             node.setOnline(true);
-
-            socket.close();
 
             return true;
 
